@@ -61,6 +61,16 @@ func SetOutput(out io.Writer) {
 	_log._log = log.New(out, _log._log.Prefix(), _log._log.Flags())
 }
 
+func SetOutputByName(path string) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	SetOutput(f)
+
+	return err
+}
+
 func SetFlags(flags int) {
 	_log._log.SetFlags(flags)
 }
