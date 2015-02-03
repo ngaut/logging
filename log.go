@@ -43,7 +43,8 @@ const (
 	LOG_LEVEL_ALL   = LOG_LEVEL_DEBUG
 )
 
-const FORMAT_DATE_TIME = "2006-01-02 15:04:05"
+const FORMAT_TIME_DAY string = "20060102"
+const FORMAT_TIME_HOUR string = "2006010215"
 
 var _log *logger = New()
 
@@ -131,8 +132,12 @@ func SetHighlighting(highlighting bool) {
 	_log.SetHighlighting(highlighting)
 }
 
-func SetRotate(rotate string) {
-	_log.SetRotate(rotate)
+func SetRotateByDay() {
+	_log.SetRotateByDay()
+}
+
+func SetRotateByHour() {
+	_log.SetRotateByHour()
 }
 
 type logger struct {
@@ -162,17 +167,17 @@ func (l *logger) SetLevelByString(level string) {
 	l.level = StringToLogLevel(level)
 }
 
-func (l *logger) SetRotate(rotate string) {
-	if rotate == "day" {
-		l.dailyRolling = true
-		l.logSuffix = genDayTime(time.Now())
-	} else if rotate == "hour" {
-		l.hourRolling = true
-		l.logSuffix = genHourTime(time.Now())
-	}
+func (l *logger) SetRotateByDay() {
+	l.dailyRolling = true
+	l.logSuffix = genDayTime(time.Now())
 }
 
-func (l *logger) checkRotate() error {
+func (l *logger) SetRotateByHour() {
+	l.hourRolling = true
+	l.logSuffix = genHourTime(time.Now())
+}
+
+func (l *logger) rotate() error {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
@@ -204,8 +209,7 @@ func (l *logger) doRotate(suffix string) error {
 	}
 
 	// Notice: Not check error, is this ok?
-	lastFd := l.fd
-	lastFd.Close()
+	l.fd.Close()
 
 	err = l.SetOutputByName(l.fileName)
 	if err != nil {
@@ -240,9 +244,9 @@ func (l *logger) log(t LogType, v ...interface{}) {
 		return
 	}
 
-	err := l.checkRotate()
+	err := l.rotate()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		return
 	}
 
@@ -267,9 +271,9 @@ func (l *logger) logf(t LogType, format string, v ...interface{}) {
 		return
 	}
 
-	err := l.checkRotate()
+	err := l.rotate()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		return
 	}
 
@@ -360,31 +364,11 @@ func LogTypeToString(t LogType) (string, string) {
 }
 
 func genDayTime(t time.Time) string {
-	now := t.Format(FORMAT_DATE_TIME)
-	year := now[0:4]
-	month := now[5:7]
-	day := now[8:10]
-
-	var ret []byte
-	ret = append(ret, []byte(year)...)
-	ret = append(ret, []byte(month)...)
-	ret = append(ret, []byte(day)...)
-	return string(ret)
+	return t.Format(FORMAT_TIME_DAY)
 }
 
 func genHourTime(t time.Time) string {
-	now := t.Format(FORMAT_DATE_TIME)
-	year := now[0:4]
-	month := now[5:7]
-	day := now[8:10]
-	hour := now[11:13]
-
-	var ret []byte
-	ret = append(ret, []byte(year)...)
-	ret = append(ret, []byte(month)...)
-	ret = append(ret, []byte(day)...)
-	ret = append(ret, []byte(hour)...)
-	return string(ret)
+	return t.Format(FORMAT_TIME_HOUR)
 }
 
 func New() *logger {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"logging"
+	"github.com/ngaut/logging"
 )
 
 func checkError(err error) {
@@ -16,7 +16,8 @@ func checkError(err error) {
 }
 
 func main() {
-	logging.SetRotate("hour")
+	logging.SetRotateByHour()
+	// logging.SetRotateByDay()
 
 	err := logging.SetOutputByName("example.log")
 	checkError(err)
