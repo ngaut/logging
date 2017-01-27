@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -61,7 +60,7 @@ func CrashLog(file string) {
 	if err != nil {
 		log.Println(err.Error())
 	} else {
-		syscall.Dup2(int(f.Fd()), 2)
+		dup2(f, os.Stderr)
 	}
 }
 
